@@ -18,11 +18,13 @@ export default {
         if (/^(id|class)$/i.test(attrName)) {
           if (/(^|[-_])ad([-_]|$)/i.test(attr.value)) {
             reporter.warn(
-              `The value of attribute ${attrName} cannot use the ad keyword.`,
+              this.id,
+              { attrName },
               event.line,
               col + attr.index,
               this,
-              attr.raw
+              attr.raw,
+              `The value of attribute ${attrName} cannot use the ad keyword.`
             )
           }
         }

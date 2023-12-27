@@ -25,21 +25,25 @@ export default {
         // Check first and last characters for spaces
         if (elem.value.trim() !== elem.value) {
           reporter.error(
-            `The attributes of [ ${attrName} ] must not have leading or trailing whitespace.`,
+            this.id + '.no-trailing',
+            { attrName },
             event.line,
             col + attr.index,
             this,
-            attr.raw
+            attr.raw,
+            `The attributes of [ ${attrName} ] must not have leading or trailing whitespace.`
           )
         }
 
         if (elem.value.replace(/ +(?= )/g, '') !== elem.value) {
           reporter.error(
-            `The attributes of [ ${attrName} ] must be separated by only one space.`,
+            this.id + '.separated-by-one',
+            { attrName },
             event.line,
             col + attr.index,
             this,
-            attr.raw
+            attr.raw,
+            `The attributes of [ ${attrName} ] must be separated by only one space.`
           )
         }
       })

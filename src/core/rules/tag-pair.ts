@@ -41,25 +41,33 @@ export default {
         if (arrTags.length > 0) {
           const lastEvent = stack[stack.length - 1]
           reporter.error(
+            this.id + '.paired-start',
+            {
+              tags: arrTags.join(''),
+              lastEventRaw: lastEvent.raw || '',
+              lastEventLine: lastEvent.line || 0,
+            },
+            event.line,
+            event.col,
+            this,
+            event.raw,
             `Tag must be paired, missing: [ ${arrTags.join(
               ''
             )} ], start tag match failed [ ${lastEvent.raw} ] on line ${
               lastEvent.line
-            }.`,
-            event.line,
-            event.col,
-            this,
-            event.raw
+            }.`
           )
         }
         stack.length = pos
       } else {
         reporter.error(
-          `Tag must be paired, no start tag: [ ${event.raw} ]`,
+          this.id + '.no-start',
+          { eventRaw: event.raw },
           event.line,
           event.col,
           this,
-          event.raw
+          event.raw,
+          `Tag must be paired, no start tag: [ ${event.raw} ]`
         )
       }
     })
@@ -74,15 +82,21 @@ export default {
       if (arrTags.length > 0) {
         const lastEvent = stack[stack.length - 1]
         reporter.error(
+          this.id + '.paired-open',
+          {
+            tags: arrTags.join(''),
+            lastEventRaw: lastEvent.raw || '',
+            lastEventLine: lastEvent.line || 0,
+          },
+          event.line,
+          event.col,
+          this,
+          '',
           `Tag must be paired, missing: [ ${arrTags.join(
             ''
           )} ], open tag match failed [ ${lastEvent.raw} ] on line ${
             lastEvent.line
-          }.`,
-          event.line,
-          event.col,
-          this,
-          ''
+          }.`
         )
       }
     })

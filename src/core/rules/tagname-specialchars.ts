@@ -10,11 +10,13 @@ export default {
       const tagName = event.tagName
       if (specialchars.test(tagName)) {
         reporter.error(
-          `The html element name of [ ${tagName} ] contains special character.`,
+          this.id,
+          { tagName },
           event.line,
           event.col,
           this,
-          event.raw
+          event.raw,
+          `The html element name of [ ${tagName} ] contains special character.`
         )
       }
     })

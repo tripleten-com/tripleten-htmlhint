@@ -15,11 +15,13 @@ export default {
           const match = /(\s*)=(\s*)/.exec(attrs[i].raw.trim())
           if (match && (match[1].length !== 0 || match[2].length !== 0)) {
             reporter.error(
-              `The attribute '${attrs[i].name}' must not have spaces between the name and value.`,
+              this.id,
+              { attrName: attrs[i].name },
               event.line,
               col + attrs[i].index,
               this,
-              attrs[i].raw
+              attrs[i].raw,
+              `The attribute '${attrs[i].name}' must not have spaces between the name and value.`
             )
           }
         }

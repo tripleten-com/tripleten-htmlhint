@@ -28,21 +28,25 @@ export default {
           (lastEvent.type === 'text' && /^\s*$/.test(lastEvent.raw) === true)
         ) {
           reporter.error(
-            '<title></title> must not be empty.',
+            this.id + '.empty',
+            {},
             event.line,
             event.col,
             this,
-            event.raw
+            event.raw,
+            '<title></title> must not be empty.'
           )
         }
       } else if (tagName === 'head') {
         if (hasTitle === false) {
           reporter.error(
-            '<title> must be present in <head> tag.',
+            this.id + '.head',
+            {},
             event.line,
             event.col,
             this,
-            event.raw
+            event.raw,
+            '<title> must be present in <head> tag.'
           )
         }
 

@@ -38,28 +38,34 @@ export default {
         if ('lang' in mapAttrs) {
           if (!mapAttrs['lang']) {
             reporter.warn(
-              'The lang attribute of <html> element must have a value.',
+              this.id + '.empty',
+              {},
               event.line,
               col,
               this,
-              event.raw
+              event.raw,
+              'The lang attribute of <html> element must have a value.'
             )
           } else if (!langValidityPattern.test(mapAttrs['lang'])) {
             reporter.warn(
-              'The lang attribute value of <html> element must be a valid BCP47.',
+              this.id + '.invalid',
+              {},
               event.line,
               col,
               this,
-              event.raw
+              event.raw,
+              'The lang attribute value of <html> element must be a valid BCP47.'
             )
           }
         } else {
           reporter.warn(
-            'An lang attribute must be present on <html> elements.',
+            this.id + '.absent',
+            {},
             event.line,
             col,
             this,
-            event.raw
+            event.raw,
+            'An lang attribute must be present on <html> elements.'
           )
         }
       }

@@ -7,11 +7,13 @@ export default {
     parser.addListener('tagstart', (event) => {
       if (event.tagName.toLowerCase() === 'script') {
         reporter.error(
-          'The <script> tag cannot be used.',
+          this.id,
+          {},
           event.line,
           event.col,
           this,
-          event.raw
+          event.raw,
+          'The <script> tag cannot be used.'
         )
       }
     })

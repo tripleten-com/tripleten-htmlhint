@@ -34,39 +34,47 @@ export default {
               whiteSpace.length % spaceLengthRequire !== 0
             ) {
               reporter.warn(
-                `Please use space for indentation and keep ${spaceLengthRequire} length.`,
+                this.id + '.space-length',
+                { spaceLengthRequire },
                 fixedPos.line,
                 1,
                 this,
-                event.raw
+                event.raw,
+                `Please use space for indentation and keep ${spaceLengthRequire} length.`
               )
             }
           } else {
             if (/^ +$/.test(whiteSpace) === false) {
               reporter.warn(
-                'Please use space for indentation.',
+                this.id + '.space',
+                {},
                 fixedPos.line,
                 1,
                 this,
-                event.raw
+                event.raw,
+                'Please use space for indentation.'
               )
             }
           }
         } else if (indentMode === 'tab' && /^\t+$/.test(whiteSpace) === false) {
           reporter.warn(
-            'Please use tab for indentation.',
+            this.id + '.tab',
+            {},
             fixedPos.line,
             1,
             this,
-            event.raw
+            event.raw,
+            'Please use tab for indentation.'
           )
         } else if (/ +\t|\t+ /.test(whiteSpace) === true) {
           reporter.warn(
-            'Do not mix tabs and spaces for indentation.',
+            this.id + '.no-mix',
+            {},
             fixedPos.line,
             1,
             this,
-            event.raw
+            event.raw,
+            'Do not mix tabs and spaces for indentation.'
           )
         }
       }

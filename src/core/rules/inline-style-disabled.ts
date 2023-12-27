@@ -14,11 +14,13 @@ export default {
 
         if (attr.name.toLowerCase() === 'style') {
           reporter.warn(
-            `Inline style [ ${attr.raw} ] cannot be used.`,
+            this.id,
+            { attrRaw: attr.raw },
             event.line,
             col + attr.index,
             this,
-            attr.raw
+            attr.raw,
+            `Inline style [ ${attr.raw} ] cannot be used.`
           )
         }
       }

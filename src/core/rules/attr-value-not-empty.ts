@@ -14,11 +14,13 @@ export default {
 
         if (attr.quote === '' && attr.value === '') {
           reporter.warn(
-            `The attribute [ ${attr.name} ] must have a value.`,
+            this.id,
+            { attrName: attr.name },
             event.line,
             col + attr.index,
             this,
-            attr.raw
+            attr.raw,
+            `The attribute [ ${attr.name} ] must have a value.`
           )
         }
       }

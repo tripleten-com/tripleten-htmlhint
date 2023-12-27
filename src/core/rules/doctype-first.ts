@@ -18,11 +18,13 @@ export default {
         /^DOCTYPE\s+/i.test(event.content) === false
       ) {
         reporter.error(
-          'Doctype must be declared first.',
+          this.id,
+          {},
           event.line,
           event.col,
           this,
-          event.raw
+          event.raw,
+          'Doctype must be declared first.'
         )
       }
 

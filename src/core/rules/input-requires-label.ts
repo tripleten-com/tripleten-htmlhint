@@ -35,11 +35,13 @@ export default {
       inputTags.forEach((inputTag) => {
         if (!hasMatchingLabelTag(inputTag)) {
           reporter.warn(
-            'No matching [ label ] tag found.',
+            this.id,
+            {},
             inputTag.event.line,
             inputTag.col,
             this,
-            inputTag.event.raw
+            inputTag.event.raw,
+            'No matching [ label ] tag found.'
           )
         }
       })

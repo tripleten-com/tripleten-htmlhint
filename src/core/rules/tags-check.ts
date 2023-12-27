@@ -46,19 +46,23 @@ export default {
 
         if (currentTagType.selfclosing === true && !event.close) {
           reporter.warn(
-            `The <${tagName}> tag must be selfclosing.`,
+            this.id + '.selfclosing',
+            { tagName },
             event.line,
             event.col,
             this,
-            event.raw
+            event.raw,
+            `The <${tagName}> tag must be selfclosing.`
           )
         } else if (currentTagType.selfclosing === false && event.close) {
           reporter.warn(
-            `The <${tagName}> tag must not be selfclosing.`,
+            this.id + '.not-selfclosing',
+            { tagName },
             event.line,
             event.col,
             this,
-            event.raw
+            event.raw,
+            `The <${tagName}> tag must not be selfclosing.`
           )
         }
 
@@ -68,7 +72,7 @@ export default {
           attrsRequired.forEach((id) => {
             if (Array.isArray(id)) {
               const copyOfId = id.map((a) => a)
-              const realID = copyOfId.shift()
+              const realID = copyOfId.shift() || ''
               const values = copyOfId
 
               if (attrs.some((attr) => attr.name === realID)) {
@@ -78,34 +82,47 @@ export default {
                     values.indexOf(attr.value) === -1
                   ) {
                     reporter.error(
-                      `The <${tagName}> tag must have attr '${realID}' with one value of '${values.join(
-                        "' or '"
-                      )}'.`,
+                      this.id + '.attr-with-value',
+                      {
+                        tagName,
+                        attrName: realID,
+                        // todo: attrName: realID_1,
+                        values: values.join(', '),
+                        // todo: values: values_1.join(', '),
+                      },
                       event.line,
                       col,
                       this,
-                      event.raw
+                      event.raw,
+                      `The <${tagName}> tag must have attr '${realID}' with one value of '${values.join(
+                        "' or '"
+                      )}'.`
                     )
                   }
                 })
               } else {
                 reporter.error(
-                  `The <${tagName}> tag must have attr '${realID}'.`,
+                  this.id + '.attr-required',
+                  { tagName, attrName: realID },
+                  // todo: { tagName, attrName: realID_1 },
                   event.line,
                   col,
                   this,
-                  event.raw
+                  event.raw,
+                  `The <${tagName}> tag must have attr '${realID}'.`
                 )
               }
             } else if (
               !attrs.some((attr) => id.split('|').indexOf(attr.name) !== -1)
             ) {
               reporter.error(
-                `The <${tagName}> tag must have attr '${id}'.`,
+                this.id + '.attr-required',
+                { tagName, attrName: id },
                 event.line,
                 col,
                 this,
-                event.raw
+                event.raw,
+                `The <${tagName}> tag must have attr '${id}'.`
               )
             }
           })
@@ -126,13 +143,21 @@ export default {
                     values.indexOf(attr.value) === -1
                   ) {
                     reporter.error(
-                      `The <${tagName}> tag must have optional attr '${realID}' with one value of '${values.join(
-                        "' or '"
-                      )}'.`,
+                      this.id + '..optional-attr-with-values',
+                      {
+                        tagName,
+                        attrName: realID,
+                        values: values.join(', '),
+                        // todo: attrName: realID_2,
+                        // todo: values: values_2.join(', '),
+                      },
                       event.line,
                       col,
                       this,
-                      event.raw
+                      event.raw,
+                      `The <${tagName}> tag must have optional attr '${realID}' with one value of '${values.join(
+                        "' or '"
+                      )}'.`
                     )
                   }
                 })
@@ -146,11 +171,13 @@ export default {
           redundantAttrs.forEach((attrName) => {
             if (attrs.some((attr) => attr.name === attrName)) {
               reporter.error(
-                `The attr '${attrName}' is redundant for <${tagName}> and should be omitted.`,
+                this.id + '.attr-is-redundant',
+                { tagName, attrName },
                 event.line,
                 col,
                 this,
-                event.raw
+                event.raw,
+                `The attr '${attrName}' is redundant for <${tagName}> and should be omitted.`
               )
             }
           })

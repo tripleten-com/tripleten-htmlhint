@@ -18,7 +18,7 @@ const checkstyleFormatter: FormatterCallback = function (formatter) {
               line: message.line,
               column: message.col,
               severity: message.type,
-              message: message.message,
+              message: message.rawMessage,
               source: `htmlhint.${message.rule.id}`,
             },
           },

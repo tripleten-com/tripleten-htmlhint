@@ -23,11 +23,13 @@ export default {
         (!type || reScript.test(type) === true)
       ) {
         reporter.warn(
-          'The <script> tag cannot be used in a <head> tag.',
+          this.id,
+          {},
           event.line,
           event.col,
           this,
-          event.raw
+          event.raw,
+          'The <script> tag cannot be used in a <head> tag.'
         )
       }
     }

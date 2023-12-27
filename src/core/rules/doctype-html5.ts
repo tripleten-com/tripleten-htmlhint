@@ -11,11 +11,13 @@ export default {
         event.content.toLowerCase() !== 'doctype html'
       ) {
         reporter.warn(
-          'Invalid doctype. Use: "<!DOCTYPE html>"',
+          this.id,
+          {},
           event.line,
           event.col,
           this,
-          event.raw
+          event.raw,
+          'Invalid doctype. Use: "<!DOCTYPE html>"'
         )
       }
     }

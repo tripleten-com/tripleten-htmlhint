@@ -7,11 +7,13 @@ export default {
     parser.addListener('tagstart', (event) => {
       if (event.tagName.toLowerCase() === 'style') {
         reporter.warn(
-          'The <style> tag cannot be used.',
+          this.id,
+          {},
           event.line,
           event.col,
           this,
-          event.raw
+          event.raw,
+          'The <style> tag cannot be used.'
         )
       }
     })

@@ -15,11 +15,13 @@ export default {
         tagName !== tagName.toLowerCase()
       ) {
         reporter.error(
-          `The html element name of [ ${tagName} ] must be in lowercase.`,
+          this.id,
+          { tagName },
           event.line,
           event.col,
           this,
-          event.raw
+          event.raw,
+          `The html element name of [ ${tagName} ] must be in lowercase.`
         )
       }
     })

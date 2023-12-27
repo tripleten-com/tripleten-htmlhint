@@ -18,11 +18,13 @@ export default {
 
         if (mapAttrName[attrName] === true) {
           reporter.error(
-            `Duplicate of attribute name [ ${attr.name} ] was found.`,
+            this.id,
+            { attrName },
             event.line,
             col + attr.index,
             this,
-            attr.raw
+            attr.raw,
+            `Duplicate of attribute name [ ${attr.name} ] was found.`
           )
         }
         mapAttrName[attrName] = true

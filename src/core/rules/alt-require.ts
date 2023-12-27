@@ -10,15 +10,8 @@ export default {
       const mapAttrs = parser.getMapAttrs(event.attrs)
       const col = event.col + tagName.length + 1
       let selector
-
       if (tagName === 'img' && !('alt' in mapAttrs)) {
-        reporter.warn(
-          'An alt attribute must be present on <img> elements.',
-          event.line,
-          col,
-          this,
-          event.raw
-        )
+        reporter.warn(this.id + '.img', {}, event.line, col, this, event.raw)
       } else if (
         (tagName === 'area' && 'href' in mapAttrs) ||
         (tagName === 'input' && mapAttrs['type'] === 'image')
@@ -26,7 +19,8 @@ export default {
         if (!('alt' in mapAttrs) || mapAttrs['alt'] === '') {
           selector = tagName === 'area' ? 'area[href]' : 'input[type=image]'
           reporter.warn(
-            `The alt attribute of ${selector} must have a value.`,
+            this.id + '.selector',
+            { selector },
             event.line,
             col,
             this,

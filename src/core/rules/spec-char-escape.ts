@@ -13,11 +13,13 @@ export default {
       while ((match = reSpecChar.exec(raw))) {
         const fixedPos = parser.fixPos(event, match.index)
         reporter.error(
-          `Special characters must be escaped : [ ${match[0]} ].`,
+          this.id,
+          { char: match[0] },
           fixedPos.line,
           fixedPos.col,
           this,
-          event.raw
+          event.raw,
+          `Special characters must be escaped : [ ${match[0]} ].`
         )
       }
     })

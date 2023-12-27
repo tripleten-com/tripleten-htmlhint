@@ -260,16 +260,16 @@
 	        this.ruleset = ruleset;
 	        this.messages = [];
 	    }
-	    info(message, line, col, rule, raw) {
-	        this.report("info", message, line, col, rule, raw);
+	    info(message, params, line, col, rule, raw, rawMessage) {
+	        this.report("info", message, params, line, col, rule, raw, rawMessage);
 	    }
-	    warn(message, line, col, rule, raw) {
-	        this.report("warning", message, line, col, rule, raw);
+	    warn(message, params, line, col, rule, raw, rawMessage) {
+	        this.report("warning", message, params, line, col, rule, raw, rawMessage);
 	    }
-	    error(message, line, col, rule, raw) {
-	        this.report("error", message, line, col, rule, raw);
+	    error(message, params, line, col, rule, raw, rawMessage) {
+	        this.report("error", message, params, line, col, rule, raw, rawMessage);
 	    }
-	    report(type, message, line, col, rule, raw) {
+	    report(type, message, params, line, col, rule, raw, rawMessage) {
 	        const lines = this.lines;
 	        const brLen = this.brLen;
 	        let evidence = '';
@@ -290,8 +290,12 @@
 	        }
 	        this.messages.push({
 	            type: type,
-	            message: message,
+	            message: {
+	                id: message,
+	                values: params,
+	            },
 	            raw: raw,
+	            rawMessage: rawMessage || '',
 	            evidence: evidence,
 	            line: line,
 	            col: col,
@@ -320,13 +324,13 @@
 	            const col = event.col + tagName.length + 1;
 	            let selector;
 	            if (tagName === 'img' && !('alt' in mapAttrs)) {
-	                reporter.warn('An alt attribute must be present on <img> elements.', event.line, col, this, event.raw);
+	                reporter.warn(this.id + '.img', {}, event.line, col, this, event.raw);
 	            }
 	            else if ((tagName === 'area' && 'href' in mapAttrs) ||
 	                (tagName === 'input' && mapAttrs['type'] === 'image')) {
 	                if (!('alt' in mapAttrs) || mapAttrs['alt'] === '') {
 	                    selector = tagName === 'area' ? 'area[href]' : 'input[type=image]';
-	                    reporter.warn(`The alt attribute of ${selector} must have a value.`, event.line, col, this, event.raw);
+	                    reporter.warn(this.id + '.selector', { selector }, event.line, col, this, event.raw);
 	                }
 	            }
 	        });
@@ -444,7 +448,7 @@
 	                const attrName = attr.name;
 	                if (!exceptions.find((exp) => testAgainstStringOrRegExp(attrName, exp)) &&
 	                    attrName !== attrName.toLowerCase()) {
-	                    reporter.error(`The attribute name of [ ${attrName} ] must be in lowercase.`, event.line, col + attr.index, this, attr.raw);
+	                    reporter.error(this.id, { attrName }, event.line, col + attr.index, this, attr.raw, `The attribute name of [ ${attrName} ] must be in lowercase.`);
 	                }
 	            }
 	        });
@@ -495,7 +499,10 @@
 	                return orderMap[a] - orderMap[b] || a.localeCompare(b);
 	            });
 	            if (originalAttrs !== JSON.stringify(listOfAttributes)) {
-	                reporter.error(`Inaccurate order ${originalAttrs} should be in hierarchy ${JSON.stringify(listOfAttributes)} `, event.line, event.col, this, event.raw);
+	                reporter.error(this.id, {
+	                    originalAttrs: originalAttrs,
+	                    listOfAttributes: JSON.stringify(listOfAttributes),
+	                }, event.line, event.col, this, event.raw, `Inaccurate order ${originalAttrs} should be in hierarchy ${JSON.stringify(listOfAttributes)} `);
 	            }
 	        });
 	    },
@@ -518,7 +525,7 @@
 	                attr = attrs[i];
 	                attrName = attr.name;
 	                if (mapAttrName[attrName] === true) {
-	                    reporter.error(`Duplicate of attribute name [ ${attr.name} ] was found.`, event.line, col + attr.index, this, attr.raw);
+	                    reporter.error(this.id, { attrName }, event.line, col + attr.index, this, attr.raw, `Duplicate of attribute name [ ${attr.name} ] was found.`);
 	                }
 	                mapAttrName[attrName] = true;
 	            }
@@ -546,7 +553,10 @@
 	                    const unsafeCode = escape(match[0])
 	                        .replace(/%u/, '\\u')
 	                        .replace(/%/, '\\x');
-	                    reporter.warn(`The value of attribute [ ${attr.name} ] cannot contain an unsafe char [ ${unsafeCode} ].`, event.line, col + attr.index, this, attr.raw);
+	                    reporter.warn(this.id, {
+	                        attrName: attr.name,
+	                        unsafeCode: unsafeCode,
+	                    }, event.line, col + attr.index, this, attr.raw, `The value of attribute [ ${attr.name} ] cannot contain an unsafe char [ ${unsafeCode} ].`);
 	                }
 	            }
 	        });
@@ -568,7 +578,7 @@
 	                attr = attrs[i];
 	                if ((attr.value !== '' && attr.quote !== '"') ||
 	                    (attr.value === '' && attr.quote === "'")) {
-	                    reporter.error(`The value of attribute [ ${attr.name} ] must be in double quotes.`, event.line, col + attr.index, this, attr.raw);
+	                    reporter.error(this.id, { attrName: attr.name }, event.line, col + attr.index, this, attr.raw, `The value of attribute [ ${attr.name} ] must be in double quotes.`);
 	                }
 	            }
 	        });
@@ -589,7 +599,7 @@
 	            for (let i = 0, l = attrs.length; i < l; i++) {
 	                attr = attrs[i];
 	                if (attr.quote === '' && attr.value === '') {
-	                    reporter.warn(`The attribute [ ${attr.name} ] must have a value.`, event.line, col + attr.index, this, attr.raw);
+	                    reporter.warn(this.id, { attrName: attr.name }, event.line, col + attr.index, this, attr.raw, `The attribute [ ${attr.name} ] must have a value.`);
 	                }
 	            }
 	        });
@@ -611,7 +621,9 @@
 	                attr = attrs[i];
 	                if ((attr.value !== '' && attr.quote !== "'") ||
 	                    (attr.value === '' && attr.quote === '"')) {
-	                    reporter.error(`The value of attribute [ ${attr.name} ] must be in single quotes.`, event.line, col + attr.index, this, attr.raw);
+	                    reporter.error(this.id, {
+	                        attrName: attr.name,
+	                    }, event.line, col + attr.index, this, attr.raw, `The value of attribute [ ${attr.name} ] must be in single quotes.`);
 	                }
 	            }
 	        });
@@ -639,10 +651,10 @@
 	                    return;
 	                }
 	                if (elem.value.trim() !== elem.value) {
-	                    reporter.error(`The attributes of [ ${attrName} ] must not have leading or trailing whitespace.`, event.line, col + attr.index, this, attr.raw);
+	                    reporter.error(this.id + '.no-trailing', { attrName }, event.line, col + attr.index, this, attr.raw, `The attributes of [ ${attrName} ] must not have leading or trailing whitespace.`);
 	                }
 	                if (elem.value.replace(/ +(?= )/g, '') !== elem.value) {
-	                    reporter.error(`The attributes of [ ${attrName} ] must be separated by only one space.`, event.line, col + attr.index, this, attr.raw);
+	                    reporter.error(this.id + '.separated-by-one', { attrName }, event.line, col + attr.index, this, attr.raw, `The attributes of [ ${attrName} ] must be separated by only one space.`);
 	                }
 	            });
 	        });
@@ -663,7 +675,7 @@
 	            }
 	            if ((event.type !== 'comment' && event.long === false) ||
 	                /^DOCTYPE\s+/i.test(event.content) === false) {
-	                reporter.error('Doctype must be declared first.', event.line, event.col, this, event.raw);
+	                reporter.error(this.id, {}, event.line, event.col, this, event.raw, 'Doctype must be declared first.');
 	            }
 	            parser.removeListener('all', allEvent);
 	        };
@@ -681,7 +693,7 @@
 	        const onComment = (event) => {
 	            if (event.long === false &&
 	                event.content.toLowerCase() !== 'doctype html') {
-	                reporter.warn('Invalid doctype. Use: "<!DOCTYPE html>"', event.line, event.col, this, event.raw);
+	                reporter.warn(this.id, {}, event.line, event.col, this, event.raw, 'Invalid doctype. Use: "<!DOCTYPE html>"');
 	            }
 	        };
 	        const onTagStart = () => {
@@ -712,7 +724,7 @@
 	            if (isInHead === true &&
 	                tagName === 'script' &&
 	                (!type || reScript.test(type) === true)) {
-	                reporter.warn('The <script> tag cannot be used in a <head> tag.', event.line, event.col, this, event.raw);
+	                reporter.warn(this.id, {}, event.line, event.col, this, event.raw, 'The <script> tag cannot be used in a <head> tag.');
 	            }
 	        };
 	        const onTagEnd = (event) => {
@@ -744,7 +756,7 @@
 	                    if ((hrefMode === 'absolute' && /^\w+?:/.test(attr.value) === false) ||
 	                        (hrefMode === 'relative' &&
 	                            /^https?:\/\//.test(attr.value) === true)) {
-	                        reporter.warn(`The value of the href attribute [ ${attr.value} ] must be ${hrefMode}.`, event.line, col + attr.index, this, attr.raw);
+	                        reporter.warn(this.id, { attrValue: attr.value, hrefMode }, event.line, col + attr.index, this, attr.raw, `The value of the href attribute [ ${attr.value} ] must be ${hrefMode}.`);
 	                    }
 	                    break;
 	                }
@@ -787,14 +799,14 @@
 	            if (tagName === 'html') {
 	                if ('lang' in mapAttrs) {
 	                    if (!mapAttrs['lang']) {
-	                        reporter.warn('The lang attribute of <html> element must have a value.', event.line, col, this, event.raw);
+	                        reporter.warn(this.id + '.empty', {}, event.line, col, this, event.raw, 'The lang attribute of <html> element must have a value.');
 	                    }
 	                    else if (!langValidityPattern.test(mapAttrs['lang'])) {
-	                        reporter.warn('The lang attribute value of <html> element must be a valid BCP47.', event.line, col, this, event.raw);
+	                        reporter.warn(this.id + '.invalid', {}, event.line, col, this, event.raw, 'The lang attribute value of <html> element must be a valid BCP47.');
 	                    }
 	                }
 	                else {
-	                    reporter.warn('An lang attribute must be present on <html> elements.', event.line, col, this, event.raw);
+	                    reporter.warn(this.id + '.absent', {}, event.line, col, this, event.raw, 'An lang attribute must be present on <html> elements.');
 	                }
 	            }
 	        });
@@ -818,7 +830,7 @@
 	                attrName = attr.name;
 	                if (/^(id|class)$/i.test(attrName)) {
 	                    if (/(^|[-_])ad([-_]|$)/i.test(attr.value)) {
-	                        reporter.warn(`The value of attribute ${attrName} cannot use the ad keyword.`, event.line, col + attr.index, this, attr.raw);
+	                        reporter.warn(this.id, { attrName }, event.line, col + attr.index, this, attr.raw, `The value of attribute ${attrName} cannot use the ad keyword.`);
 	                    }
 	                }
 	            }
@@ -848,10 +860,12 @@
 	            },
 	        };
 	        let rule;
+	        let opts = options;
 	        if (typeof options === 'string') {
 	            rule = arrRules[options];
 	        }
 	        else {
+	            opts = '';
 	            rule = options;
 	        }
 	        if (typeof rule === 'object' && rule.regId) {
@@ -860,6 +874,8 @@
 	            if (!(regId instanceof RegExp)) {
 	                regId = new RegExp(regId);
 	            }
+	            console.log(JSON.stringify(rule));
+	            console.log(JSON.stringify(opts));
 	            parser.addListener('tagstart', (event) => {
 	                const attrs = event.attrs;
 	                let attr;
@@ -868,7 +884,7 @@
 	                    attr = attrs[i];
 	                    if (attr.name.toLowerCase() === 'id') {
 	                        if (regId.test(attr.value) === false) {
-	                            reporter.warn(message, event.line, col + attr.index, this, attr.raw);
+	                            reporter.warn(`${this.id}.${opts}`, {}, event.line, col + attr.index, this, attr.raw, message);
 	                        }
 	                    }
 	                    if (attr.name.toLowerCase() === 'class') {
@@ -877,7 +893,7 @@
 	                        for (let j = 0, l2 = arrClass.length; j < l2; j++) {
 	                            classValue = arrClass[j];
 	                            if (classValue && regId.test(classValue) === false) {
-	                                reporter.warn(message, event.line, col + attr.index, this, classValue);
+	                                reporter.warn(`${this.id}.${opts}`, {}, event.line, col + attr.index, this, classValue, message);
 	                            }
 	                        }
 	                    }
@@ -912,7 +928,7 @@
 	                            mapIdCount[id]++;
 	                        }
 	                        if (mapIdCount[id] > 1) {
-	                            reporter.error(`The id value [ ${id} ] must be unique.`, event.line, col + attr.index, this, attr.raw);
+	                            reporter.error(this.id, {}, event.line, col + attr.index, this, attr.raw, `The id value [ ${id} ] must be unique.`);
 	                        }
 	                    }
 	                    break;
@@ -939,11 +955,11 @@
 	                attr = attrs[i];
 	                attrName = attr.name.toLowerCase();
 	                if (reEvent.test(attrName) === true) {
-	                    reporter.warn(`Inline script [ ${attr.raw} ] cannot be used.`, event.line, col + attr.index, this, attr.raw);
+	                    reporter.warn(this.id, { attrRaw: attr.raw }, event.line, col + attr.index, this, attr.raw, `Inline script [ ${attr.raw} ] cannot be used.`);
 	                }
 	                else if (attrName === 'src' || attrName === 'href') {
 	                    if (/^\s*javascript:/i.test(attr.value)) {
-	                        reporter.warn(`Inline script [ ${attr.raw} ] cannot be used.`, event.line, col + attr.index, this, attr.raw);
+	                        reporter.warn(this.id, { attrRaw: attr.raw }, event.line, col + attr.index, this, attr.raw, `Inline script [ ${attr.raw} ] cannot be used.`);
 	                    }
 	                }
 	            }
@@ -965,7 +981,7 @@
 	            for (let i = 0, l = attrs.length; i < l; i++) {
 	                attr = attrs[i];
 	                if (attr.name.toLowerCase() === 'style') {
-	                    reporter.warn(`Inline style [ ${attr.raw} ] cannot be used.`, event.line, col + attr.index, this, attr.raw);
+	                    reporter.warn(this.id, { attrRaw: attr.raw }, event.line, col + attr.index, this, attr.raw, `Inline style [ ${attr.raw} ] cannot be used.`);
 	                }
 	            }
 	        });
@@ -999,7 +1015,7 @@
 	        parser.addListener('end', () => {
 	            inputTags.forEach((inputTag) => {
 	                if (!hasMatchingLabelTag(inputTag)) {
-	                    reporter.warn('No matching [ label ] tag found.', inputTag.event.line, inputTag.col, this, inputTag.event.raw);
+	                    reporter.warn(this.id, {}, inputTag.event.line, inputTag.col, this, inputTag.event.raw, 'No matching [ label ] tag found.');
 	                }
 	            });
 	        });
@@ -1024,7 +1040,7 @@
 	    init(parser, reporter) {
 	        parser.addListener('tagstart', (event) => {
 	            if (event.tagName.toLowerCase() === 'script') {
-	                reporter.error('The <script> tag cannot be used.', event.line, event.col, this, event.raw);
+	                reporter.error(this.id, {}, event.line, event.col, this, event.raw, 'The <script> tag cannot be used.');
 	            }
 	        });
 	    },
@@ -1060,20 +1076,20 @@
 	                    if (spaceLengthRequire) {
 	                        if (/^ +$/.test(whiteSpace) === false ||
 	                            whiteSpace.length % spaceLengthRequire !== 0) {
-	                            reporter.warn(`Please use space for indentation and keep ${spaceLengthRequire} length.`, fixedPos.line, 1, this, event.raw);
+	                            reporter.warn(this.id + '.space-length', { spaceLengthRequire }, fixedPos.line, 1, this, event.raw, `Please use space for indentation and keep ${spaceLengthRequire} length.`);
 	                        }
 	                    }
 	                    else {
 	                        if (/^ +$/.test(whiteSpace) === false) {
-	                            reporter.warn('Please use space for indentation.', fixedPos.line, 1, this, event.raw);
+	                            reporter.warn(this.id + '.space', {}, fixedPos.line, 1, this, event.raw, 'Please use space for indentation.');
 	                        }
 	                    }
 	                }
 	                else if (indentMode === 'tab' && /^\t+$/.test(whiteSpace) === false) {
-	                    reporter.warn('Please use tab for indentation.', fixedPos.line, 1, this, event.raw);
+	                    reporter.warn(this.id + '.tab', {}, fixedPos.line, 1, this, event.raw, 'Please use tab for indentation.');
 	                }
 	                else if (/ +\t|\t+ /.test(whiteSpace) === true) {
-	                    reporter.warn('Do not mix tabs and spaces for indentation.', fixedPos.line, 1, this, event.raw);
+	                    reporter.warn(this.id + '.no-mix', {}, fixedPos.line, 1, this, event.raw, 'Do not mix tabs and spaces for indentation.');
 	                }
 	            }
 	        });
@@ -1093,7 +1109,7 @@
 	            let match;
 	            while ((match = reSpecChar.exec(raw))) {
 	                const fixedPos = parser.fixPos(event, match.index);
-	                reporter.error(`Special characters must be escaped : [ ${match[0]} ].`, fixedPos.line, fixedPos.col, this, event.raw);
+	                reporter.error(this.id, { char: match[0] }, fixedPos.line, fixedPos.col, this, event.raw, `Special characters must be escaped : [ ${match[0]} ].`);
 	            }
 	        });
 	    },
@@ -1118,7 +1134,7 @@
 	                    (tagName === 'link' && attr.name === 'href') ||
 	                    (tagName === 'object' && attr.name === 'data')) &&
 	                    attr.value === '') {
-	                    reporter.error(`The attribute [ ${attr.name} ] of the tag [ ${tagName} ] must have a value.`, event.line, col + attr.index, this, attr.raw);
+	                    reporter.error(this.id, { attrName: attr.name, tagName }, event.line, col + attr.index, this, attr.raw, `The attribute [ ${attr.name} ] of the tag [ ${tagName} ] must have a value.`);
 	                }
 	            }
 	        });
@@ -1134,7 +1150,7 @@
 	    init(parser, reporter) {
 	        parser.addListener('tagstart', (event) => {
 	            if (event.tagName.toLowerCase() === 'style') {
-	                reporter.warn('The <style> tag cannot be used.', event.line, event.col, this, event.raw);
+	                reporter.warn(this.id, {}, event.line, event.col, this, event.raw, 'The <style> tag cannot be used.');
 	            }
 	        });
 	    },
@@ -1174,12 +1190,16 @@
 	                }
 	                if (arrTags.length > 0) {
 	                    const lastEvent = stack[stack.length - 1];
-	                    reporter.error(`Tag must be paired, missing: [ ${arrTags.join('')} ], start tag match failed [ ${lastEvent.raw} ] on line ${lastEvent.line}.`, event.line, event.col, this, event.raw);
+	                    reporter.error(this.id + '.paired-start', {
+	                        tags: arrTags.join(''),
+	                        lastEventRaw: lastEvent.raw || '',
+	                        lastEventLine: lastEvent.line || 0,
+	                    }, event.line, event.col, this, event.raw, `Tag must be paired, missing: [ ${arrTags.join('')} ], start tag match failed [ ${lastEvent.raw} ] on line ${lastEvent.line}.`);
 	                }
 	                stack.length = pos;
 	            }
 	            else {
-	                reporter.error(`Tag must be paired, no start tag: [ ${event.raw} ]`, event.line, event.col, this, event.raw);
+	                reporter.error(this.id + '.no-start', { eventRaw: event.raw }, event.line, event.col, this, event.raw, `Tag must be paired, no start tag: [ ${event.raw} ]`);
 	            }
 	        });
 	        parser.addListener('end', (event) => {
@@ -1189,7 +1209,11 @@
 	            }
 	            if (arrTags.length > 0) {
 	                const lastEvent = stack[stack.length - 1];
-	                reporter.error(`Tag must be paired, missing: [ ${arrTags.join('')} ], open tag match failed [ ${lastEvent.raw} ] on line ${lastEvent.line}.`, event.line, event.col, this, '');
+	                reporter.error(this.id + '.paired-open', {
+	                    tags: arrTags.join(''),
+	                    lastEventRaw: lastEvent.raw || '',
+	                    lastEventLine: lastEvent.line || 0,
+	                }, event.line, event.col, this, '', `Tag must be paired, missing: [ ${arrTags.join('')} ], open tag match failed [ ${lastEvent.raw} ] on line ${lastEvent.line}.`);
 	            }
 	        });
 	    },
@@ -1207,7 +1231,7 @@
 	            const tagName = event.tagName.toLowerCase();
 	            if (mapEmptyTags[tagName] !== undefined) {
 	                if (!event.close) {
-	                    reporter.warn(`The empty tag : [ ${tagName} ] must be self closed.`, event.line, event.col, this, event.raw);
+	                    reporter.warn(this.id, { tagName }, event.line, event.col, this, event.raw, `The empty tag : [ ${tagName} ] must be self closed.`);
 	                }
 	            }
 	        });
@@ -1226,7 +1250,7 @@
 	            const tagName = event.tagName.toLowerCase();
 	            if (mapEmptyTags[tagName] !== undefined) {
 	                if (event.close) {
-	                    reporter.error(`The empty tag : [ ${tagName} ] must not use self closed syntax.`, event.line, event.col, this, event.raw);
+	                    reporter.error(this.id, { tagName }, event.line, event.col, this, event.raw, `The empty tag : [ ${tagName} ] must not use self closed syntax.`);
 	                }
 	            }
 	        });
@@ -1247,7 +1271,7 @@
 	            const tagName = event.tagName;
 	            if (exceptions.indexOf(tagName) === -1 &&
 	                tagName !== tagName.toLowerCase()) {
-	                reporter.error(`The html element name of [ ${tagName} ] must be in lowercase.`, event.line, event.col, this, event.raw);
+	                reporter.error(this.id, { tagName }, event.line, event.col, this, event.raw, `The html element name of [ ${tagName} ] must be in lowercase.`);
 	            }
 	        });
 	    },
@@ -1264,7 +1288,7 @@
 	        parser.addListener('tagstart,tagend', (event) => {
 	            const tagName = event.tagName;
 	            if (specialchars.test(tagName)) {
-	                reporter.error(`The html element name of [ ${tagName} ] contains special character.`, event.line, event.col, this, event.raw);
+	                reporter.error(this.id, { tagName }, event.line, event.col, this, event.raw, `The html element name of [ ${tagName} ] contains special character.`);
 	            }
 	        });
 	    },
@@ -1294,12 +1318,12 @@
 	                const lastEvent = event.lastEvent;
 	                if (lastEvent.type !== 'text' ||
 	                    (lastEvent.type === 'text' && /^\s*$/.test(lastEvent.raw) === true)) {
-	                    reporter.error('<title></title> must not be empty.', event.line, event.col, this, event.raw);
+	                    reporter.error(this.id + '.empty', {}, event.line, event.col, this, event.raw, '<title></title> must not be empty.');
 	                }
 	            }
 	            else if (tagName === 'head') {
 	                if (hasTitle === false) {
-	                    reporter.error('<title> must be present in <head> tag.', event.line, event.col, this, event.raw);
+	                    reporter.error(this.id + '.head', {}, event.line, event.col, this, event.raw, '<title> must be present in <head> tag.');
 	                }
 	                parser.removeListener('tagstart', onTagStart);
 	                parser.removeListener('tagend', onTagEnd);
@@ -1353,32 +1377,36 @@
 	            if (tagsTypings[tagName]) {
 	                const currentTagType = tagsTypings[tagName];
 	                if (currentTagType.selfclosing === true && !event.close) {
-	                    reporter.warn(`The <${tagName}> tag must be selfclosing.`, event.line, event.col, this, event.raw);
+	                    reporter.warn(this.id + '.selfclosing', { tagName }, event.line, event.col, this, event.raw, `The <${tagName}> tag must be selfclosing.`);
 	                }
 	                else if (currentTagType.selfclosing === false && event.close) {
-	                    reporter.warn(`The <${tagName}> tag must not be selfclosing.`, event.line, event.col, this, event.raw);
+	                    reporter.warn(this.id + '.not-selfclosing', { tagName }, event.line, event.col, this, event.raw, `The <${tagName}> tag must not be selfclosing.`);
 	                }
 	                if (Array.isArray(currentTagType.attrsRequired)) {
 	                    const attrsRequired = currentTagType.attrsRequired;
 	                    attrsRequired.forEach((id) => {
 	                        if (Array.isArray(id)) {
 	                            const copyOfId = id.map((a) => a);
-	                            const realID = copyOfId.shift();
+	                            const realID = copyOfId.shift() || '';
 	                            const values = copyOfId;
 	                            if (attrs.some((attr) => attr.name === realID)) {
 	                                attrs.forEach((attr) => {
 	                                    if (attr.name === realID &&
 	                                        values.indexOf(attr.value) === -1) {
-	                                        reporter.error(`The <${tagName}> tag must have attr '${realID}' with one value of '${values.join("' or '")}'.`, event.line, col, this, event.raw);
+	                                        reporter.error(this.id + '.attr-with-value', {
+	                                            tagName,
+	                                            attrName: realID,
+	                                            values: values.join(', '),
+	                                        }, event.line, col, this, event.raw, `The <${tagName}> tag must have attr '${realID}' with one value of '${values.join("' or '")}'.`);
 	                                    }
 	                                });
 	                            }
 	                            else {
-	                                reporter.error(`The <${tagName}> tag must have attr '${realID}'.`, event.line, col, this, event.raw);
+	                                reporter.error(this.id + '.attr-required', { tagName, attrName: realID }, event.line, col, this, event.raw, `The <${tagName}> tag must have attr '${realID}'.`);
 	                            }
 	                        }
 	                        else if (!attrs.some((attr) => id.split('|').indexOf(attr.name) !== -1)) {
-	                            reporter.error(`The <${tagName}> tag must have attr '${id}'.`, event.line, col, this, event.raw);
+	                            reporter.error(this.id + '.attr-required', { tagName, attrName: id }, event.line, col, this, event.raw, `The <${tagName}> tag must have attr '${id}'.`);
 	                        }
 	                    });
 	                }
@@ -1393,7 +1421,11 @@
 	                                attrs.forEach((attr) => {
 	                                    if (attr.name === realID &&
 	                                        values.indexOf(attr.value) === -1) {
-	                                        reporter.error(`The <${tagName}> tag must have optional attr '${realID}' with one value of '${values.join("' or '")}'.`, event.line, col, this, event.raw);
+	                                        reporter.error(this.id + '..optional-attr-with-values', {
+	                                            tagName,
+	                                            attrName: realID,
+	                                            values: values.join(', '),
+	                                        }, event.line, col, this, event.raw, `The <${tagName}> tag must have optional attr '${realID}' with one value of '${values.join("' or '")}'.`);
 	                                    }
 	                                });
 	                            }
@@ -1404,7 +1436,7 @@
 	                    const redundantAttrs = currentTagType.redundantAttrs;
 	                    redundantAttrs.forEach((attrName) => {
 	                        if (attrs.some((attr) => attr.name === attrName)) {
-	                            reporter.error(`The attr '${attrName}' is redundant for <${tagName}> and should be omitted.`, event.line, col, this, event.raw);
+	                            reporter.error(this.id + '.attr-is-redundant', { tagName, attrName }, event.line, col, this, event.raw, `The attr '${attrName}' is redundant for <${tagName}> and should be omitted.`);
 	                        }
 	                    });
 	                }
@@ -1428,7 +1460,7 @@
 	                if (exceptions.indexOf(attrs[i].name) === -1) {
 	                    const match = /(\s*)=(\s*)/.exec(attrs[i].raw.trim());
 	                    if (match && (match[1].length !== 0 || match[2].length !== 0)) {
-	                        reporter.error(`The attribute '${attrs[i].name}' must not have spaces between the name and value.`, event.line, col + attrs[i].index, this, attrs[i].raw);
+	                        reporter.error(this.id, { attrName: attrs[i].name }, event.line, col + attrs[i].index, this, attrs[i].raw, `The attribute '${attrs[i].name}' must not have spaces between the name and value.`);
 	                    }
 	                }
 	            }

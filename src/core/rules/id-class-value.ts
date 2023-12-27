@@ -23,10 +23,11 @@ export default {
       },
     }
     let rule: { regId: RegExp; message: string } | boolean
-
+    let opts = options
     if (typeof options === 'string') {
       rule = arrRules[options]
     } else {
+      opts = ''
       rule = options as { regId: RegExp; message: string }
     }
 
@@ -37,6 +38,8 @@ export default {
       if (!(regId instanceof RegExp)) {
         regId = new RegExp(regId)
       }
+      console.log(JSON.stringify(rule))
+      console.log(JSON.stringify(opts))
 
       parser.addListener('tagstart', (event) => {
         const attrs = event.attrs
@@ -49,11 +52,13 @@ export default {
           if (attr.name.toLowerCase() === 'id') {
             if (regId.test(attr.value) === false) {
               reporter.warn(
-                message,
+                `${this.id}.${opts}`,
+                {},
                 event.line,
                 col + attr.index,
                 this,
-                attr.raw
+                attr.raw,
+                message
               )
             }
           }
@@ -66,11 +71,13 @@ export default {
               classValue = arrClass[j]
               if (classValue && regId.test(classValue) === false) {
                 reporter.warn(
-                  message,
+                  `${this.id}.${opts}`,
+                  {},
                   event.line,
                   col + attr.index,
                   this,
-                  classValue
+                  classValue,
+                  message
                 )
               }
             }

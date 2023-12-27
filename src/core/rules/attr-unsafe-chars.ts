@@ -23,11 +23,16 @@ export default {
             .replace(/%u/, '\\u')
             .replace(/%/, '\\x')
           reporter.warn(
-            `The value of attribute [ ${attr.name} ] cannot contain an unsafe char [ ${unsafeCode} ].`,
+            this.id,
+            {
+              attrName: attr.name,
+              unsafeCode: unsafeCode,
+            },
             event.line,
             col + attr.index,
             this,
-            attr.raw
+            attr.raw,
+            `The value of attribute [ ${attr.name} ] cannot contain an unsafe char [ ${unsafeCode} ].`
           )
         }
       }

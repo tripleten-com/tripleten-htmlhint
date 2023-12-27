@@ -67,8 +67,14 @@ export const enum ReportType {
 
 export interface Hint {
   type: ReportType
-  message: string
+  message: {
+    id: string
+    values: {
+      [key: string]: string | number
+    }
+  }
   raw: string
+  rawMessage: string
   evidence: string
   line: number
   col: number
